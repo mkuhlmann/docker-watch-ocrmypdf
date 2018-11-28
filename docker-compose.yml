@@ -1,11 +1,23 @@
 version: '3.5'
 
+volumes:
+    consume:
+
 services:
-    ocrwatch:
-        build: .
+
+    ocrsftp:
+        image: atmoz/sftp:alpine
         volumes:
-            - /consume/shared:/consume
+        - consume:/home/ocr/consume
+        ports:
+        - "2022:22"
+        command: user:password:1000
+
+    ocrwatch:
+        image: mkuhlmann/watch-ocrmypdf
+        volumes:
+            - consume:/consume
         environment:
-# obscure password with rclone obscure PASSWORD
+            # obscure password with rclone obscure PASSWORD
             - OCRWATCH_AFTER=rclone copy --webdav-url https://NEXTCLOUD_URL/remote.php/webdav/ --webdav-user NEXTCLOUD_USER --webdav-pass NEXTCLOUD_PASS_OBSCURED  %FILE% :webdav:/OCR
             - OCRWATCH_OCRMYPDF=-l eng+deu --rotate-pages --deskew --clean --remove-background --jobs 2 --output-type pdfa --jbig2-lossy --optimize 3
