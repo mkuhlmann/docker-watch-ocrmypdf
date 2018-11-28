@@ -1,8 +1,5 @@
 #!/bin/bash
 
-RCLONE_CMD=''
-
-
 . /appenv/bin/activate
 
 inotifywait -m /consume -e create -e moved_to |
@@ -10,6 +7,16 @@ inotifywait -m /consume -e create -e moved_to |
         fullfile=/consume/$file
         extension="${file##*.}"
         filename="${file%.*}"
+
+        echo $file was created
+
+        if [[ ! "$extension" =~ ^(pdf|jpg|jpeg|png|PDF|JPG|JPEG|PNG)$ ]]; then
+            echo $extension is not supported. Skipping.
+            continue
+        fi
+
+        sleep 5
+        # @TODO use lsof to see if file is still being written
 
         if [ $extension != 'pdf' ]; then
             echo $file is an image. running img2pdf
@@ -19,8 +26,6 @@ inotifywait -m /consume -e create -e moved_to |
             extension=pdf
         fi
 
-        echo $file was created
-        sleep 2s
         ocrmypdf $OCRWATCH_OCRMYPDF $fullfile /tmp/$filename.pdf
         
         cmd=$(echo $OCRWATCH_AFTER | sed "s|%FILE%|/tmp/$filename.pdf|")
