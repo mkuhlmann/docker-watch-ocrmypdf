@@ -8,15 +8,22 @@ inotifywait -m /consume -e create -e moved_to |
         extension="${file##*.}"
         filename="${file%.*}"
 
-        echo $file was created
+        echo "$file was created. extension=$extension filename=$filename"
+
+        filesize=$(stat -c%s $fullfile)
+        echo "sleeping 2s"
+        sleep 2
+
+        while [[ $filesize -lt $(stat -c%s $fullfile) ]]; do
+            filesize=$(stat -c%s $fullfile)
+            echo "waiting for transfer to finish (size=$filesize)"
+            sleep 2
+        done
 
         if [[ ! "$extension" =~ ^(pdf|jpg|jpeg|png|PDF|JPG|JPEG|PNG)$ ]]; then
             echo $extension is not supported. Skipping.
             continue
         fi
-
-        sleep 5
-        # @TODO use lsof to see if file is still being written
 
         if [ $extension != 'pdf' ]; then
             echo $file is an image. running img2pdf
@@ -26,11 +33,20 @@ inotifywait -m /consume -e create -e moved_to |
             extension=pdf
         fi
 
-        ocrmypdf $OCRWATCH_OCRMYPDF $fullfile /tmp/$filename.pdf
-        
-        cmd=$(echo $OCRWATCH_AFTER | sed "s|%FILE%|/tmp/$filename.pdf|")
-        $cmd
 
+        after_cmd=$(echo $OCRWATCH_AFTER | sed "s|%FILE%|/tmp/$filename.pdf|")
+
+        if [ ! -z "$OCRWATCH_IGNOREOCR" ]; then
+            if [[ $filename =~ $OCRWATCH_IGNOREOCR ]]; then
+                echo "filename matches OCRWATCH_IGNOREOCR, skipping ocr"
+                mv $fullfile /tmp/$filename.pdf
+                after_cmd
+                continue                
+            fi
+        fi
+
+        ocrmypdf $OCRWATCH_OCRMYPDF $fullfile /tmp/$filename.pdf
+        $after_cmd
         rm $fullfile
         
     done
