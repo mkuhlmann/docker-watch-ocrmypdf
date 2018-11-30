@@ -40,7 +40,7 @@ inotifywait -m /consume -e create -e moved_to |
             if [[ $filename =~ $OCRWATCH_IGNOREOCR ]]; then
                 echo "filename matches OCRWATCH_IGNOREOCR, skipping ocr"
                 mv $fullfile /tmp/$filename.pdf
-                after_cmd
+                $after_cmd
                 continue                
             fi
         fi
