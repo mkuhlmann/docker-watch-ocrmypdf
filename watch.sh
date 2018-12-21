@@ -2,13 +2,24 @@
 
 . /appenv/bin/activate
 
-inotifywait -m /consume -e create -e moved_to |
+if [ ! -z "$WOCR_CONSUME_PATH" ]; then
+    WOCR_CONSUME_PATH=/consume
+fi
+
+inotifywait -r -m $WOCR_CONSUME_PATH -e create -e moved_to |
     while read path action file; do
-        fullfile=/consume/$file
+        subdirectory=""
+
+        if [[ $path =~ ^$WOCR_CONSUME_PATH/(.*?)/$ ]]; then
+            subdirectory=${BASH_REMATCH[1]}
+        fi
+
+        fullfile=$path$file
         extension="${file##*.}"
         filename="${file%.*}"
+        tmpname=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 6 | head -n 1)
 
-        echo "$file was created. extension=$extension filename=$filename"
+        echo "$file was created. subdir=$subdirectory extension=$extension filename=$filename tmpname=$tmpname"
 
         filesize=$(stat -c%s $fullfile)
         echo "sleeping 2s"
@@ -27,27 +38,48 @@ inotifywait -m /consume -e create -e moved_to |
 
         if [ $extension != 'pdf' ]; then
             echo $file is an image. running img2pdf
-            img2pdf $fullfile -o /tmp/out.pdf
+            img2pdf $fullfile -o /tmp/$tmpname.pdf
             rm $fullfile
-            fullfile=/tmp/out.pdf
+
+            fullfile=/tmp/$tmpname.pdf
             extension=pdf
         fi
 
-
-        after_cmd=$(echo $OCRWATCH_AFTER | sed "s|%FILE%|/tmp/$filename.pdf|")
-
-        if [ ! -z "$OCRWATCH_IGNOREOCR" ]; then
-            if [[ $filename =~ $OCRWATCH_IGNOREOCR ]]; then
-                echo "filename matches OCRWATCH_IGNOREOCR, skipping ocr"
-                mv $fullfile /tmp/$filename.pdf
-                $after_cmd
-                continue                
+        # run ocr command
+        cmdVarName="WOCR_CMD"
+        if [ ! -z "$subdirectory" ]; then
+            cmdVarName="WOCR_CMD_$subdirectory"
+            if [ -z "${!cmdVarName}" ]; then
+                echo $cmdVarName is not set. Exiting.
+                continue
             fi
         fi
 
-        ocrmypdf $OCRWATCH_OCRMYPDF $fullfile /tmp/$filename.pdf
-        $after_cmd
+        ocr_cmd=$(echo ${!cmdVarName} | sed "s|%INFILE%|$fullfile|" | sed "s|%OUTFILE%|/tmp/$filename.pdf|")
+        fullfile=/tmp/$filename.pdf
+
+        # run ocr command
+        echo $ocr_cmd
+        $ocr_cmd
+
+        cmdVarName="WOCR_AFTERCMD"
+        if [ ! -z "$subdirectory" ]; then
+            cmdVarName="WOCR_AFTERCMD_$subdirectory"
+            if [ -z ${!cmdVarName} ]; then
+                echo $cmdVarName is not set. Using default.
+                cmdVarName="WOCR_AFTERCMD"
+            fi
+        fi
+
+        if [ ! -z "${!cmdVarName}" ]; then
+            after_cmd=$(echo ${!cmdVarName} | sed "s|%FILE%|$fullfile|")
+           
+            echo $after_cmd
+            $after_cmd
+        else
+            echo no WOCR_AFTER command set.
+        fi
+
         rm $fullfile
-        
     done
 

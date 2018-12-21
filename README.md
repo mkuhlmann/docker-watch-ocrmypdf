@@ -6,10 +6,16 @@ Small bash script that watches a directory (/consume), runs [ocrmypdf](https://g
 
 ## Docker
 
-Run mkuhlmann/watch-ocrmypdf and mount the directory that should be watched to /consume. You can customize ocrmypdf command line arguments via the `OCRWATCH_OCRMYPDF` enviroment variable. The command to be executed after ocr'ing should be supplied via `OCRWATCH_AFTER`, in which `%FILE` will be replaced with the path to the output pdf.
+Run mkuhlmann/watch-ocrmypdf and mount the directory that should be watched to /consume (or customize with $WOCR_CONSUME_PATH). 
+
+You can specify `$WOCR_CMD` to the command that should be run after making sure that file is a pdf file. Filenames of input and output will be suplied by `%INFILE%` and `%OUTFILE%`.
+
+It is also possible to create subdirectories with corresponding `$WOCR_CMD_SUBDIRECTORYHERE` if you want to execute different ocr methods (e.g. clean up the image in one and keep the original image in another dir).
+
+After `$WOCR_CMD` is finished you are able to set `$WOCR_AFTERCMD` or  `$WOCR_AFTERCMD_SUBDIRECTORYHERE` after the first command is finished to copy the file to a remove (rclone is included in image). If `$WOCR_AFTERCMD_SUBDIRECTORYHERE` is not set in a subdirectory the default `$WOCR_AFTERCMD` will be used. 
+
 
 See `docker-compose.yml` for an example that uses atmoz/sftp:alpine to provide a sftp server as remote for a document scanner and uploads the file to nextcloud afterwards.
-
 
 # Contributing
 

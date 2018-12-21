@@ -19,6 +19,7 @@ services:
             - consume:/consume
         environment:
             # obscure password with rclone obscure PASSWORD
-            - OCRWATCH_AFTER=rclone copy --webdav-url https://NEXTCLOUD_URL/remote.php/webdav/ --webdav-user NEXTCLOUD_USER --webdav-pass NEXTCLOUD_PASS_OBSCURED  %FILE% :webdav:/OCR
-            - OCRWATCH_OCRMYPDF=-l eng+deu --rotate-pages --deskew --clean --remove-background --jobs 2 --output-type pdfa --jbig2-lossy --optimize 3
-            - OCRWATCH_IGNOREOCR=Scan$$
+            - WOCR_AFTERCMD=rclone copy --webdav-url https://NEXTCLOUD_URL/remote.php/webdav/ --webdav-user NEXTCLOUD_USER --webdav-pass NEXTCLOUD_PASS_OBSCURED  %FILE% :webdav:/OCR
+            - WOCR_CMD=ocrmypdf -l eng+deu --rotate-pages --deskew --clean --remove-background --jobs 2 --output-type pdfa --jbig2-lossy --optimize 3 %INFILE% %OUTFILE%
+            - WOCR_CMD_onlyocr=ocrmypdf -l eng+deu --rotate-pages --jobs 2 --output-type pdfa %INFILE% %OUTFILE%
+            
