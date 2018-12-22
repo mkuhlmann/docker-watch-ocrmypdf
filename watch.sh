@@ -2,9 +2,7 @@
 
 . /appenv/bin/activate
 
-if [ ! -z "$WOCR_CONSUME_PATH" ]; then
-    WOCR_CONSUME_PATH=/consume
-fi
+WOCR_CONSUME_PATH=${WOCR_CONSUME_PATH:-/consume}
 
 inotifywait -r -m $WOCR_CONSUME_PATH -e create -e moved_to |
     while read path action file; do
