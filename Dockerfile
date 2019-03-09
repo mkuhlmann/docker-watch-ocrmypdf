@@ -1,4 +1,4 @@
-FROM jbarlow83/ocrmypdf:v7.3.1
+FROM jbarlow83/ocrmypdf:v8.2.2
 
 USER root
 RUN apt-get install inotify-tools curl unzip man-db -y
