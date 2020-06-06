@@ -1,12 +1,9 @@
-FROM jbarlow83/ocrmypdf:v8.2.2
+FROM jbarlow83/ocrmypdf:v9.8.2
 
-USER root
-RUN apt-get install inotify-tools curl unzip man-db -y
+RUN apt-get install inotify-tools curl unzip man-db -y && rm -rf /var/lib/apt/lists/*
 
 RUN curl https://rclone.org/install.sh | bash
 
 COPY ./watch.sh /
-
 RUN chmod +x /watch.sh
-USER docker
 ENTRYPOINT [ "/watch.sh" ]

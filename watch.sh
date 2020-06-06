@@ -23,8 +23,8 @@ inotifywait -r -m $WOCR_CONSUME_PATH -e create -e moved_to |
         echo "sleeping 2s"
         sleep 2
 
-        while [[ $filesize -lt $(stat -c%s $fullfile) ]]; do
-            filesize=$(stat -c%s $fullfile)
+        while [[ $filesize -lt $(stat -c%s "$fullfile") ]]; do
+            filesize=$(stat -c%s "$fullfile")
             echo "waiting for transfer to finish (size=$filesize)"
             sleep 2
         done
