@@ -79,5 +79,7 @@ inotifywait -r -m $WOCR_CONSUME_PATH -e create -e moved_to |
         fi
 
         rm $fullfile
+
+        echo Finished processing $filename
     done
 

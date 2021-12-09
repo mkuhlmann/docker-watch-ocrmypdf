@@ -1,6 +1,8 @@
-FROM jbarlow83/ocrmypdf:v9.8.2
+FROM jbarlow83/ocrmypdf:v13.1.0
 
-RUN apt-get install inotify-tools curl unzip man-db -y && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && \
+    apt-get install inotify-tools curl unzip man-db -y && \
+    apt-get clean  && rm -rf /var/lib/apt/lists/* /var/tmp/* /tmp/*
 
 RUN curl https://rclone.org/install.sh | bash
 
